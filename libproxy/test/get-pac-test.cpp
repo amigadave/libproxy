@@ -188,20 +188,20 @@ done:
 		void sendOverflow(int csock)
 		{
 			int ret;
-			int size = 500000;
+			int size = 50000000; // Must be larger than the kernel TCP receive buffer
 			char *buf = new char[size];
 			memset(buf, 1, size);
 
 			const char *basic =
 				"HTTP/1.1 200 OK\n" \
 				"Content-Type: text/plain\n" \
-				"Content-Length: 500000\n" \
+				"Content-Length: 50000000\n" \
 				"\n";
-			ret = send(csock, (void*)basic, strlen(basic), 0);
+			ret = send(csock, (void*)basic, strlen(basic), MSG_NOSIGNAL);
 			assert(ret == strlen(basic));
-			ret = send(csock, (void*)buf, size, 0);
-			if (!(errno == EBADF))
-				abort(); // Test failed... the socket did not close on us
+			ret = send(csock, (void*)buf, size, MSG_NOSIGNAL);
+			if (ret == size)
+				abort(); // Test failed... the socket should not accept the whole buffer
 			delete[] buf;
 			shutdown(csock, SHUT_RDWR);
 		}
